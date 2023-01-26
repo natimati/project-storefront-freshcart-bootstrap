@@ -1,0 +1,56 @@
+<div class="d-flex align-items-center flex-column">
+    <div class="container-xxl d-flex flex-row row border-bottom pb-5">
+        <div class="col">
+            <h5 class="pb-2">Categories</h5>
+            <ul class="navbar-nav">
+                <li *ngFor="let item of categoriesList$ | async" class="nav-item footer-list-el">
+                    <a class="nav-link p-0" [routerLink]="'/categories/'+ item.id">{{item.name}}</a>
+                </li>
+            </ul>
+        </div>
+        <div class="col">
+            <h5 class="pb-2">Sotres</h5>
+            <ul class="navbar-nav">
+                <li *ngFor="let item of storesList$ | async" class="nav-item footer-list-el">
+                    <a class="nav-link p-0" [routerLink]="'/stores/'+ item.id">{{item.name}}</a>
+                </li>
+            </ul>
+        </div>
+        <div class="col">
+            <h5 class="pb-2">Get to know us</h5>
+            <ul class="navbar-nav">
+                <li *ngFor="let item of getToKnowUsList$ | async" class="nav-item footer-list-el">
+                    <a class="nav-link p-1" [routerLink]="">{{item}}</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+    <div class="container-xxl d-flex justify-content-between border-bottom p-5">
+        <div class="d-flex gap-2 justify-content-center align-items-center">
+            <h6 class="m-0 mb-0">Payment Partners</h6>
+            <div class="d-flex gap-1">
+                <img src="/assets/images/payment/amazonpay.svg" />
+                <img src="/assets/images/payment/mastercard.svg" />
+                <img src="/assets/images/payment/american-express.svg" />
+                <img src="/assets/images/payment/visa.svg" />
+                <img src="/assets/images/payment/paypal.svg" />
+            </div>
+        </div>
+        <div class="d-flex gap-5 align-items-center">
+            <h6 class="m-0 mb-0">Get deliveries with FreshCart</h6>
+            <div class="d-flex gap-1">
+                <img src="/assets/images/appbutton/appstore-btn.svg" />
+                <img src="/assets/images/appbutton/googleplay-btn.svg" />
+            </div>
+        </div>
+    </div>
+    <div class="container-xxl d-flex justify-content-center pt-5 d-flex align-items-center gap-1">
+        <p class="m-0 opacity-75 ">Folow us on</p>
+        <img class="p-1 border border-secondary rounded opacity-50"
+            src="/assets/libs/bootstrap-icons/icons/facebook.svg" />
+        <img class="p-1 border border-secondary rounded opacity-50"
+            src="/assets/libs/bootstrap-icons/icons/twitter.svg" />
+        <img class="p-1 border border-secondary rounded opacity-50"
+            src="/assets/libs/bootstrap-icons/icons/instagram.svg" />
+    </div>
+</div>
