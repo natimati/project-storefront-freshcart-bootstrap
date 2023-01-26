@@ -1,0 +1,10 @@
+<div class="container-fluid border-bottom mb-10">
+  <div class="container-xxl pb-5 mt-5">
+    <img src="/assets/images/logo/freshcart-logo.svg" class="pb-5" />
+    <ul class="nav">
+      <li *ngFor="let item of categoriesList$ | async" class="nav-item">
+        <a [routerLink]="'/categories/'+ item.id" class="nav-link">{{item.name}}</a>
+      </li>
+    </ul>
+  </div>
+</div>
