@@ -1,7 +1,6 @@
-import { ChangeDetectionStrategy, Component, ViewEncapsulation } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, ViewEncapsulation } from '@angular/core';
 import { Observable, of, Subject } from 'rxjs';
 import { CategoryModel } from '../../models/category.model';
-import { CategoriesService } from '../../services/categories.service';
 
 @Component({
   selector: 'app-header',
@@ -10,12 +9,12 @@ import { CategoriesService } from '../../services/categories.service';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class HeaderComponent {
-  readonly categoriesList$: Observable<CategoryModel[]> = this._categoriesService.getAllCategories();
+  @Input() categoriesList!: CategoryModel[] | null;
   private _isMobileMenuVisibleSubject: Subject<boolean> = new Subject<boolean>();
   public isMobileMenuVisible$: Observable<boolean> = this._isMobileMenuVisibleSubject.asObservable();
 
 
-  constructor(private _categoriesService: CategoriesService) {
+  constructor() {
   }
   handleToggle(isMobileMenuVisible: boolean) {
     this._isMobileMenuVisibleSubject.next(isMobileMenuVisible) ;
