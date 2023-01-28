@@ -19,5 +19,3 @@ export class FooterComponent {
   constructor(private _categoriesService: CategoriesService, private _storesService: StoresService) {
   }
 }
-
-
