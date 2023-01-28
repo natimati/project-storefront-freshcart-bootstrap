@@ -1,15 +1,43 @@
-<div class="container my-5 py-5">
-  <h5 class="mt-5 pt-5">Shop by category</h5>
-  <div class="row mb-5 pb-5">
-    <div *ngFor="let item of categoriesList$ | async" class="col-lg-3 g-lg-3">
-      <a [routerLink]="'/categories/' + item.id" class="text-decoration-none text-inherit ">
-        <div class="card card-product">
-          <div class="card-body text-center py-8 ">
-            <img [src]="item.imageUrl" [alt]="item.name" class="mb-3">
-            <div class="text-truncate">{{item.name}}</div>
+<section class="my-lg-14 my-8">
+  <div class="container">
+    <h5 class="mt-5 pt-5">Shop by category</h5>
+    <div class="row">
+      <div *ngFor="let item of categoriesList$ | async" class="col-lg-3 g-lg-3">
+        <a [routerLink]="'/categories/' + item.id" class="text-decoration-none text-inherit ">
+          <div class="card card-product">
+            <div class="card-body text-center py-8 ">
+              <img [src]="item.imageUrl" [alt]="item.name" class="mb-3">
+              <div class="text-truncate">{{item.name}}</div>
+            </div>
           </div>
-        </div>
-      </a>
+        </a>
+      </div>
     </div>
   </div>
-</div>
+</section>
+
+<section class="my-lg-14 my-8">
+  <div class="container">
+    <div class="row">
+      <h5 class="mt-5 pt-5">Stores</h5>
+      <ng-container *ngIf="storesList$ | async as storesList">
+        <p>You have <span class="text-success fw-bold mb-2">{{ storesList.length }}</span> vendors now</p>
+        <div *ngFor="let item of storesList" class="col-lg-4 g-lg-3">
+          <div class="card flex-row p-8 card-product ">
+            <div>
+              <img [src]="item.logoUrl" [alt]="item.name" class="rounded-circle icon-shape icon-xl">
+            </div>
+            <div class="ms-6">
+              <h5 class="mb-1">
+                <a [routerLink]="'/stores/' + item.id" class="text-inherit">{{item.name}}</a>
+              </h5>
+              <div> <!-- badge -->
+                <div class="badge text-bg-light border">{{convertDistance(item.distanceInMeters)}} km</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </ng-container>  
+    </div>
+  </div>
+</section>
