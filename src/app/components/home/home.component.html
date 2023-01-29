@@ -1,1 +1,15 @@
-<p>hello world - this is home page</p>
+<div class="container my-5 py-5">
+  <h5 class="mt-5 pt-5">Shop by category</h5>
+  <div class="row mb-5 pb-5">
+    <div *ngFor="let item of categoriesList$ | async" class="col-lg-3 g-lg-3">
+      <a [routerLink]="'/categories/' + item.id" class="text-decoration-none text-inherit ">
+        <div class="card card-product">
+          <div class="card-body text-center py-8 ">
+            <img [src]="item.imageUrl" [alt]="item.name" class="mb-3">
+            <div class="text-truncate">{{item.name}}</div>
+          </div>
+        </div>
+      </a>
+    </div>
+  </div>
+</div>

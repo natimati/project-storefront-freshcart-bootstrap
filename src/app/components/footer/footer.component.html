@@ -5,8 +5,8 @@
         <div class="row g-4">
           <div class="col-12">
             <h6 class="mb-4">Categories</h6>
-            <ul class="navbar-nav">
-              <li *ngFor="let item of categoriesList$ | async" class="nav-item footer-list-el">
+            <ul class="navbar-nav" *ngIf="categoriesList">
+              <li *ngFor="let item of categoriesList" class="nav-item footer-list-el">
                 <a class="nav-link p-0" [routerLink]="'/categories/'+ item.id">{{item.name}}</a>
               </li>
             </ul>

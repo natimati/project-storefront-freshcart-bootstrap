@@ -31,8 +31,8 @@
           </div>
         </div>
         <div class="collapse navbar-collapse" [ngClass]="{'show': isMobileMenuVisible$ | async}">
-          <ul [ngClass]="{'navbar-nav': isMobileMenuVisible$ | async, 'nav': !(isMobileMenuVisible$ | async)}">
-            <li *ngFor="let item of categoriesList$ | async" class="nav-item pb-2">
+          <ul *ngIf="categoriesList" [ngClass]="{'navbar-nav': isMobileMenuVisible$ | async, 'nav': !(isMobileMenuVisible$ | async)}">
+            <li *ngFor="let item of categoriesList" class="nav-item pb-2">
               <a [routerLink]="'/categories/'+ item.id" class="nav-link">{{item.name}}</a>
             </li>
           </ul>
