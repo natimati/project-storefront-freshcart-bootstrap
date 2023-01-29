@@ -1,4 +1,4 @@
-<header class=" pb-2" [ngClass]="(isMobileMenuVisible$ | async) ? '' : 'border-bottom'">
+<header class=" pb-2" [ngClass]="{'border-bottom':  isMobileMenuVisible$ | async}">
   <div class="navbar navbar-light navbar-expand-lg py-lg-4 pt-3 px-0 pb-0">
     <div class="container">
       <div class="row w-100 align-items-center g-lg-2 g-0">
@@ -14,10 +14,10 @@
             </a>
             <div class="d-flex align-items-center lh-1">
               <button type="button" class="btn-close" aria-label="Close" (click)="handleToggle(false)"
-                [ngClass]="(isMobileMenuVisible$ | async) ? '' : 'd-none'"></button>
+                [ngClass]="{'d-none': !(isMobileMenuVisible$ | async)}"></button>
               <button 
                 class="navbar-toggler collapsed" 
-                [ngClass]="(isMobileMenuVisible$ | async) ? 'd-none' : ''"
+                [ngClass]="{'d-none': isMobileMenuVisible$ | async}"
                 (click)="handleToggle(true)" 
                 type="button"
                 aria-controls="navbar-default" 
@@ -30,11 +30,8 @@
             </div>
           </div>
         </div>
-        <div class="collapse navbar-collapse" [ngClass]="(isMobileMenuVisible$ | async) ? 'show' : ''">
-          <ul 
-            *ngIf="categoriesList"
-            [ngClass]="(isMobileMenuVisible$ | async) ? 'navbar-nav' : 'nav'"
-          >
+        <div class="collapse navbar-collapse" [ngClass]="{'show': isMobileMenuVisible$ | async}">
+          <ul *ngIf="categoriesList" [ngClass]="{'navbar-nav': isMobileMenuVisible$ | async, 'nav': !(isMobileMenuVisible$ | async)}">
             <li *ngFor="let item of categoriesList" class="nav-item pb-2">
               <a [routerLink]="'/categories/'+ item.id" class="nav-link">{{item.name}}</a>
             </li>
