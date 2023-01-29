@@ -1,1 +1,69 @@
-<p>this is store page</p>
+<section class="my-lg-14 my-8" *ngIf="storeWithProducts$ | async as store">
+  <div class="container">
+    <div class="row mb-5 pb-5">
+      <ng-container >
+        <div class="d-flex flex-column col">
+          <div>
+            <img [src]="store.logoUrl" [alt]="store.name" class="rounded-circle icon-shape icon-xxl">
+          </div>
+          <div class="mt-4">
+            <h1 class="mb-1 h4">{{store.name}}</h1>
+            <div class="small text-muted"> <span>It is only {{store.distance}} km away from you</span> </div>
+          </div>
+        </div>
+      </ng-container>
+      <ng-container>
+        <div class="col-12 col-lg-9 col-md-8">
+          <div class="mb-8 bg-light d-lg-flex justify-content-lg-between rounded">
+            <div class="align-self-center p-8">
+              <div class="mb-3">
+                <h2 class="mb-0 fs-1">
+                  {{store.name}}
+                </h2>
+                <p class="mb-0 text-muted">
+                  Whatever the occasion, we've got you covered.
+                </p>
+              </div>
+              <div class="position-relative">
+                <form [formGroup]="search">
+                  <input type="text" formControlName="product" [placeholder]="'Search ' + store.name + ' Super Market'"
+                    id="exampleFormControlInput1" class="form-control">
+                  <span class="position-absolute end-0 top-0 mt-2 me-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                      class="feather feather-search">
+                      <circle cx="11" cy="11" r="8"></circle>
+                      <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                  </span>
+                </form>
+              </div>
+            </div>
+            <div class="py-4">
+              <img src="assets/images/svg-graphics/store-graphics.svg" alt="store-graphics" class="img-fluid">
+            </div>
+          </div>
+        </div>
+      </ng-container>
+    </div>
+    <ng-container class="mt-5">
+      <div class="row">
+        <div class="mt-4">
+          <h2 class="mb-4 ">
+            {{store.name}} products:
+          </h2>
+        </div>
+        <div *ngFor="let product of store.products" class=" col-lg-2 col-md-4 col-6 mt-2">
+          <div class="card card-product border-white">
+            <div class="card-body">
+              <img src="{{product.imageUrl}}" alt="{{product.name}}" class="mb-3 img-fluid">
+              <div class="text-truncate">
+                {{product.name}}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </ng-container>
+  </div>
+</section>
