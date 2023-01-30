@@ -4,25 +4,55 @@
       <aside class="col-lg-3 col-md-4 mb-6 mb-md-0">
         <div class="mb-8">
           <h5 class="mb-3">Categories</h5>
-          <ul *ngFor="let category of categories$ | async" class="nav nav-category">
-            <li class="nav-item border-bottom w-100">
-              <a [routerLink]="'/categories/'+ category.id" class="nav-link">
-                {{category.name}}
-                <i class="feather-icon icon-chevron-right"></i>
-              </a>
-            </li>
-          </ul>
+          <div *ngFor="let category of categories$ | async">
+            <ul class="nav nav-category">
+              <li class="nav-item border-bottom w-100">
+                <a [routerLink]="'/categories/'+ category.id" class="nav-link">
+                  {{category.name}}
+                  <i class="feather-icon icon-chevron-right"></i>
+                </a>
+              </li>
+            </ul>
+          </div>
         </div>
       </aside>
       <div class="col-lg-9">
-      <ng-container *ngIf="currentCategory$ | async as item" class=""><!-- card -->
-        <div class="card mb-4 bg-light border-0"> <!-- card body -->
-          <div class="card-body p-9">
-            <h2 class="mb-0 fs-1">{{item.name}}</h2>
+        <div *ngIf="productsByCategory$ | async as item" class="d-flex flex-column gap-5">
+          <ng-container>
+            <div class="card mb-4 bg-light border-0">
+              <div class="card-body p-9">
+                <h2 class="mb-0 fs-1">{{item.categoryName}}</h2>
+              </div>
+            </div>
+          </ng-container>
+          <span><span class="text-dark">{{item.productCount}}</span> Products found</span>
+          <div class="row" *ngFor="let product of item.products">
+            <div class="col">
+              <div class="card flex-row p-1 card-product align-items-center">
+                <div><img [src]="product.imageUrl" [alt]="product.name"></div>
+                <div class="ms-6">
+                  <div class="small text-muted"><a [routerLink]="'item'" class="text-inherit">{{item.categoryName}}</a>
+                  </div>
+                  <h6>{{product.name}}</h6>
+                    <small class="text-warning">
+                      <i class="bi" *ngFor="let val of product.ratingMark" [ngClass]="
+                          { 'bi-star-fill': val === 1,
+                            'bi-star': val === 0,
+                            'bi-star-half': val === .5 
+                          }
+                        ">
+                      </i>
+                    </small>
+                    <span class="text-muted small">
+                      {{ product.ratingValue }}({{product.ratingCount}})
+                    </span>
+                  <h6 class="mt-5">${{product.price}}</h6>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-      </ng-container>
+      </div>
     </div>
-  </div>
   </div>
 </section>
