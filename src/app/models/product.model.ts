@@ -7,4 +7,5 @@ export interface ProductModel {
   readonly ratingCount: number;
   readonly ratingValue: number;
   readonly storeIds: string[];
+  readonly price: number;
 }
