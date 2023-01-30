@@ -20,33 +20,44 @@ export class HomeComponent {
   readonly storesList$: Observable<StoreModel[]> = this._storesService.getAllStores();
   readonly productsList$: Observable<ProductModel[]> = this._productsService.getAllProducts();
 
-  readonly categoriesProducts$: Observable<CategoryProductsQueryModel[]> = combineLatest([
+  readonly fruitsCategoryProducts$: Observable<CategoryProductsQueryModel | undefined> = combineLatest([
     this.categoriesList$,
     this.productsList$
   ]).pipe(map(([categories, products]) => {
     const fruitsCategory = categories.find(category => category.name === 'Fruits & Vegetables');
+    return this.resolveCategoryData(products, fruitsCategory)
+  }));
+
+  readonly snacksCategoryProducts$: Observable<CategoryProductsQueryModel | undefined> = combineLatest([
+    this.categoriesList$,
+    this.productsList$
+  ]).pipe(map(([categories, products]) => {
     const snacksCategory = categories.find(category => category.name === 'Snack & Munchies');
-    const categoriesProducts = products.reduce((acc: CategoryProductsQueryModel[], product) => {
-      if (fruitsCategory && product.categoryId === fruitsCategory.id) {
-        acc[0].products.push(product)
-      } else if (snacksCategory && product.categoryId === snacksCategory.id) {
-        acc[1].products.push(product)
-      }
-      return acc
-    }, [{ categoryName: 'Fruits & Vegetables', products: [] }, { categoryName: 'Snack & Munchies', products: [] }]) 
-    return categoriesProducts.map(category => ({
-      categoryName: category.categoryName,
-      products: category.products.sort((a, b) => {
-        return b.featureValue - a.featureValue
-      }).slice(0,5)
-    }
-    ))
-  }))
+    return this.resolveCategoryData(products, snacksCategory)
+  }));
 
   constructor(private _categoriesService: CategoriesService, private _storesService: StoresService, private _productsService: ProductsService) {
   }
 
   convertDistance(distance: number): number {
     return Math.round(distance / 100 )/10
-  }
+  };
+
+  resolveCategoryData(allProducts: ProductModel[], category?: CategoryModel): CategoryProductsQueryModel | undefined {
+    if (!category) { return }
+
+    const categoryProducts = allProducts.reduce((acc: CategoryProductsQueryModel['products'], product) => {
+      if (product.categoryId === category.id) {
+        acc.push(product)
+      }
+      return acc
+    }, [] )
+    const sortedCategoryProducts = categoryProducts.sort((a, b) => {
+      return b.featureValue - a.featureValue
+    }).slice(0, 5)
+    return {
+      categoryName: category.name,
+      products: sortedCategoryProducts
+    }
+  };
 }
