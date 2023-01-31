@@ -23,7 +23,8 @@ export class CategoryProductsComponent implements AfterViewInit {
   });
 
   readonly storeForm = new FormGroup({
-    stores: new FormGroup({})
+    stores: new FormGroup({}),
+    search: new FormControl()
   })
 
   private _priceFromSubject: Subject<number> = new Subject<number>();
@@ -50,9 +51,28 @@ export class CategoryProductsComponent implements AfterViewInit {
   );
 
   readonly categories$: Observable<CategoryModel[]> = this._categoriesService.getAllCategories().pipe(shareReplay(1));
-  readonly stores$: Observable<StoreModel[]> = this._storeService.getAllStores().pipe(shareReplay(1), tap((stores) => {
-    this.resolveStoresFilter(stores);
-  }));
+  readonly stores$: Observable<StoreModel[]> = this._storeService.getAllStores();
+
+  readonly searchPhrase$: Observable<string> = this.storeForm.valueChanges.pipe(
+    map((formValues) => formValues.search),
+    shareReplay(1),
+    startWith(''),
+  );
+
+  readonly filteredStores$: Observable<StoreModel[]> = combineLatest([
+    this.stores$,
+    this.searchPhrase$
+  ]).pipe(
+    map(([stores, search]) => {
+      if (search) {
+        return stores.filter(store => store.name.toLowerCase().includes(search.toLowerCase()))
+      } return stores
+
+    }),
+    tap(stores => {
+      this.resolveStoresFilter(stores)
+    }));
+
 
   readonly selectedStores$: Observable<string[]> = combineLatest([
     this.stores$,
@@ -250,7 +270,6 @@ export class CategoryProductsComponent implements AfterViewInit {
 
   resolveStoresFilter(stores: StoreModel[]) {
     const storesGroup: FormGroup = this.storeForm.get('stores') as FormGroup;
-
     for (let i = 0; i < stores.length; i++) {
       storesGroup.addControl(stores[i].id, new FormControl(false))
     }
