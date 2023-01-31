@@ -25,7 +25,14 @@
               </div>
             </div>
           </ng-container>
-          <span><span class="text-dark">{{item.productCount}}</span> Products found</span>
+          <div class="row justify-content-between align-items-center" >
+              <span class="col-lg-3"><span class="text-dark">{{item.productCount}}</span> Products found</span>
+              <div class="col-lg-3">
+                <select class="form-select" #order (change)="sort(order.value)">
+                  <option *ngFor="let item of orders | async" [value]="item.id">{{item.name}}</option>
+                </select>
+            </div>
+          </div>
           <div class="row" *ngFor="let product of item.products">
             <div class="col">
               <div class="card flex-row p-1 card-product align-items-center">
@@ -34,18 +41,18 @@
                   <div class="small text-muted"><a [routerLink]="'item'" class="text-inherit">{{item.categoryName}}</a>
                   </div>
                   <h6>{{product.name}}</h6>
-                    <small class="text-warning">
-                      <i class="bi" *ngFor="let val of product.ratingMark" [ngClass]="
+                  <small class="text-warning">
+                    <i class="bi" *ngFor="let val of product.ratingMark" [ngClass]="
                           { 'bi-star-fill': val === 1,
                             'bi-star': val === 0,
                             'bi-star-half': val === .5 
                           }
                         ">
-                      </i>
-                    </small>
-                    <span class="text-muted small">
-                      {{ product.ratingValue }}({{product.ratingCount}})
-                    </span>
+                    </i>
+                  </small>
+                  <span class="text-muted small">
+                    {{ product.ratingValue }}({{product.ratingCount}})
+                  </span>
                   <h6 class="mt-5">${{product.price}}</h6>
                 </div>
               </div>

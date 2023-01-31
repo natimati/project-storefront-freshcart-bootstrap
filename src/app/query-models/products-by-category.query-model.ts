@@ -4,6 +4,7 @@ export interface ProductsByCategoryQueryModel {
   readonly productCount: number;
   readonly products: {
     name: string;
+    featureValue: number;
     ratingCount: number;
     ratingValue: number;
     ratingMark: number[];
