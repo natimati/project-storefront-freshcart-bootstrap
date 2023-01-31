@@ -6,4 +6,5 @@ export interface ProductsInCategoryQueryModel {
     readonly ratingMark: number[];
     readonly price: number;
     readonly imageUrl: string
+    readonly storeIds: string[]
 }
