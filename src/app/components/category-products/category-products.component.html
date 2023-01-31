@@ -16,20 +16,20 @@
           </div>
         </div>
 
-        <ng-container [formGroup]="storeForm">
+        <form [formGroup]="storeForm">
           <div class="mb-8">
             <h5 class="mb-3">Stores</h5>
             <div class="row">
-              <input placeholder="Search by store" class="form-control mb-3" formControlName="search">
+              <input type="text" placeholder="Search by store" class="form-control mb-3" formControlName="search">
             </div>
-            <form formGroupName="stores">
+            <div formGroupName="stores">
               <div *ngFor="let store of filteredStores$ | async" class="form-check mb-2">
                 <input [id]="store.id" class="form-check-input" type="checkbox" [formControlName]="store.id" [value]="store">
                 <label [for]="store.id" class="form-check-label">{{store.name}}</label>
               </div>
-            </form>
+            </div>
           </div>
-        </ng-container>
+        </form>
 
         <div class="mb-8">
           <h5 class="mb-3">Price</h5>

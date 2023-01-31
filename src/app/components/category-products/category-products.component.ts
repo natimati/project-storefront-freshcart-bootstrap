@@ -1,7 +1,7 @@
 import { AfterViewInit, ChangeDetectionStrategy, Component, ViewEncapsulation } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { BehaviorSubject, Observable, Subject, combineLatest, map, of, shareReplay, startWith, switchMap, take, tap } from 'rxjs';
+import { BehaviorSubject, Observable, Subject, combineLatest, map, of, shareReplay, startWith, switchMap, take, tap, debounce, debounceTime } from 'rxjs';
 import { CategoryModel } from '../../models/category.model';
 import { StoreModel } from '../../models/store.model';
 import { ProductsInCategoryQueryModel } from '../../query-models/products-in-category.query-model';
@@ -24,7 +24,7 @@ export class CategoryProductsComponent implements AfterViewInit {
 
   readonly storeForm = new FormGroup({
     stores: new FormGroup({}),
-    search: new FormControl()
+    search: new FormControl('')
   })
 
   private _priceFromSubject: Subject<number> = new Subject<number>();
@@ -51,17 +51,16 @@ export class CategoryProductsComponent implements AfterViewInit {
   );
 
   readonly categories$: Observable<CategoryModel[]> = this._categoriesService.getAllCategories().pipe(shareReplay(1));
-  readonly stores$: Observable<StoreModel[]> = this._storeService.getAllStores();
-
-  readonly searchPhrase$: Observable<string> = this.storeForm.valueChanges.pipe(
-    map((formValues) => formValues.search),
-    shareReplay(1),
-    startWith(''),
-  );
+  readonly stores$: Observable<StoreModel[]> = this._storeService.getAllStores().pipe(shareReplay(1));
 
   readonly filteredStores$: Observable<StoreModel[]> = combineLatest([
     this.stores$,
-    this.searchPhrase$
+    this.storeForm.valueChanges.pipe(
+      map((formValues) => formValues.search),
+      shareReplay(1),
+      startWith(''),
+      debounceTime(500),
+    )
   ]).pipe(
     map(([stores, search]) => {
       if (search) {
