@@ -1,6 +1,8 @@
-import { ChangeDetectionStrategy, Component, ViewEncapsulation } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
-import { BehaviorSubject, Observable, combineLatest, map, of, shareReplay, switchMap } from 'rxjs';
+import { AfterViewInit, ChangeDetectionStrategy, Component, ViewEncapsulation } from '@angular/core';
+import { FormControl, FormGroup } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
+import { BehaviorSubject, Observable, combineLatest, map, of, shareReplay, switchMap, tap, take } from 'rxjs';
+import { ProductsInCategoryQueryModel } from 'src/app/query-models/products-in-category.query-model';
 import { CategoryModel } from '../../models/category.model';
 import { ProductsByCategoryQueryModel } from '../../query-models/products-by-category.query-model';
 import { CategoriesService } from '../../services/categories.service';
@@ -12,36 +14,60 @@ import { ProductsService } from '../../services/products.service';
   encapsulation: ViewEncapsulation.None,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class CategoryProductsComponent {
+export class CategoryProductsComponent implements AfterViewInit {
+  readonly paginationForm = new FormGroup({
+    limit: new FormControl(),
+    page: new FormControl()
+  });
+
   private _orderSubject: BehaviorSubject<string> = new BehaviorSubject<string>('featured');
   public order$: Observable<string> = this._orderSubject.asObservable();
+  readonly limitOptions$: Observable<number[]> = of([5, 10, 15]);
+
+  readonly currentLimit$: Observable<number> = this._activatedRoute.queryParams.pipe(
+    map(params => params['limit'] ? +params['limit'] : 5), shareReplay(1)
+  );
+  readonly currentPage$: Observable<number> = this._activatedRoute.queryParams.pipe(
+    map(params => params['page'] ? +params['page'] : 1), shareReplay(1)
+  );
 
   readonly categories$: Observable<CategoryModel[]> = this._categoriesService.getAllCategories().pipe(shareReplay(1));
   readonly currentCategoryId$: Observable<string> = this._activatedRoute.params.pipe(
-    map(params => params['categoryId'].toString())
+    map(params => params['categoryId'].toString()), shareReplay(1)
   );
 
-  readonly productsByCategory$: Observable<ProductsByCategoryQueryModel> = combineLatest([
-    this.currentCategoryId$.pipe(
-      switchMap(id => this._categoriesService.getCategoryById(id))
-    ),
+  readonly productsInCategory$: Observable<ProductsInCategoryQueryModel[]> = combineLatest([
+    this.currentCategoryId$,
     this._productService.getAllProducts(),
-    this.order$
-  ]).pipe(map(([currCategory, products, order]) => {
-    const categoryProducts = products.filter(product => product.categoryId === currCategory.id);
-    const productsByCategory = {
-      categoryName: currCategory.name,
-      categoryId: currCategory.id,
-      productCount: categoryProducts.length,
-      products: categoryProducts.map(product => ({
+  ]).pipe(map(([id, products]) => {
+    const categoryProducts = products.filter(product => product.categoryId === id);
+    return categoryProducts.map(product => (
+       {
         name: product.name,
         featureValue: product.featureValue,
         ratingCount: product.ratingCount,
         ratingValue: product.ratingValue,
         ratingMark: this.starsCounter(product.ratingValue),
         price: product.price,
-        imageUrl: product.imageUrl
-      })).sort((a, b) => {
+        imageUrl: product.imageUrl,
+      }
+    ))
+  }), shareReplay(1))
+
+  readonly productsByCategory$: Observable<ProductsByCategoryQueryModel> = combineLatest([
+    this.currentCategoryId$.pipe(
+      switchMap(id => this._categoriesService.getCategoryById(id))
+    ),
+    this.productsInCategory$,
+    this.order$,
+    this.currentLimit$,
+    this.currentPage$,
+  ]).pipe(map(([currCategory, products, order, limit, page]) => {
+    const productsByCategory = {
+      categoryName: currCategory.name,
+      categoryId: currCategory.id,
+      productCount: products.length,
+      products: products.sort((a, b) => {
         if (order === 'featured') {
           return b.featureValue - a.featureValue
         }
@@ -55,9 +81,21 @@ export class CategoryProductsComponent {
           return b.price - a.price
         }
         return 0
-      })
+      }).slice((page - 1) * limit, page * limit)
     }
-    return productsByCategory
+    return productsByCategory;
+  }));
+
+  readonly pages$: Observable<number[]> = combineLatest([
+    this.currentCategoryId$,
+    this.productsInCategory$,
+    this.currentLimit$,
+  ]).pipe(map(([id, products, limit]) => {
+    const result: number[] = [];
+    for (let i = 1; i <= Math.ceil(products.length / limit); i++) {
+      result.push(i)
+    }
+    return result
   }));
 
   public orders: Observable<{ id: string, name: string }[]> = of([
@@ -70,8 +108,18 @@ export class CategoryProductsComponent {
   constructor(
     private _categoriesService: CategoriesService,
     private _activatedRoute: ActivatedRoute,
-    private _productService: ProductsService
+    private _productService: ProductsService,
+    private _router: Router
   ) {
+  };
+
+  ngAfterViewInit() {
+    this.paginationForm.valueChanges.pipe(tap(formValues => this._router.navigate([], {
+      queryParams: {
+        limit: formValues.limit,
+        page: formValues.page
+      }
+    }))).subscribe()
   };
 
   starsCounter(ratingValue: number): number[] {
@@ -87,8 +135,32 @@ export class CategoryProductsComponent {
   };
 
   sort(value: string) {
-    console.log(value)
-    return this._orderSubject.next(value)   
-  }
+    return this._orderSubject.next(value)
+  };
+  onLimitChange(limit: number): void {
+    combineLatest([
+      this.productsInCategory$,
+      this.currentPage$
+    ]).pipe(take(1),
+      tap(([products, page]) => {
+        return this._router.navigate([], {
+          queryParams: {
+            page: (page > Math.ceil(products.length / limit)) ? Math.ceil(products.length / limit) : page,
+            limit: limit
+          }
+        })
+      })).subscribe();
 
+  };
+  onPageChange(page: number): void {
+      this.currentLimit$.pipe(take(1),
+      tap(limit => {
+      return this._router.navigate([], {
+        queryParams: {
+          page: page,
+          limit
+        }
+      })
+    })).subscribe();
+  };
 }
