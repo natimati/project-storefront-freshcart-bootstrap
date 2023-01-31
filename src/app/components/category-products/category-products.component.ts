@@ -26,9 +26,14 @@ export class CategoryProductsComponent implements AfterViewInit {
   private _priceToSubject: Subject<number> = new Subject<number>();
   public priceTo$: Observable<number> = this._priceToSubject.asObservable().pipe(startWith(0));
 
+  private _ratingSubject: Subject<number> = new Subject<number>();
+  public rating$: Observable<number> = this._ratingSubject.asObservable().pipe(startWith(0));
+
   private _orderSubject: BehaviorSubject<string> = new BehaviorSubject<string>('featured');
   public order$: Observable<string> = this._orderSubject.asObservable();
   readonly limitOptions$: Observable<number[]> = of([5, 10, 15]);
+  // added 1 start to show products with rating >=1 and <2
+  public ratingOptions$: Observable<number[]> = of([5, 4, 3, 2, 1]);
 
   readonly currentLimit$: Observable<number> = this._activatedRoute.queryParams.pipe(
     map(params => params['limit'] ? +params['limit'] : 5), shareReplay(1)
@@ -42,7 +47,7 @@ export class CategoryProductsComponent implements AfterViewInit {
     map(params => params['categoryId'].toString()), shareReplay(1)
   );
 
-  readonly productsInCategory$: Observable<ProductsInCategoryQueryModel[]> = combineLatest([
+  readonly products$: Observable<ProductsInCategoryQueryModel[]> = combineLatest([
     this.currentCategoryId$,
     this._productService.getAllProducts(),
   ]).pipe(map(([id, products]) => {
@@ -64,67 +69,60 @@ export class CategoryProductsComponent implements AfterViewInit {
     this.currentCategoryId$.pipe(
       switchMap(id => this._categoriesService.getCategoryById(id))
     ),
-    this.productsInCategory$,
+    this.products$,
     this.order$,
     this.currentLimit$,
     this.currentPage$,
     this.priceFrom$,
-    this.priceTo$
-  ]).pipe(map(([currCategory, products, order, limit, page, from, to]) => {
+    this.priceTo$,
+    this.rating$
+  ]).pipe(map(([currCategory, products, order, limit, page, from, to, rating]) => {
+    const filteredProducts = products.sort((a, b) => {
+      if (order === 'featured') {
+        return b.featureValue - a.featureValue
+      }
+      if (order === 'rating') {
+        return b.ratingValue - a.ratingValue
+      }
+      if (order === 'price-asc') {
+        return a.price - b.price
+      }
+      if (order === 'price-desc') {
+        return b.price - a.price
+      }
+      return 0
+    })
+      .filter(product => {
+        return this.filterByPrice(product.price, from, to) && this.filterByRating(product.ratingValue, rating)
+      });
     const productsByCategory = {
       categoryName: currCategory.name,
       categoryId: currCategory.id,
-      productCount: products.length,
-      products: products.sort((a, b) => {
-        if (order === 'featured') {
-          return b.featureValue - a.featureValue
-        }
-        if (order === 'rating') {
-          return b.ratingValue - a.ratingValue
-        }
-        if (order === 'price-asc') {
-          return a.price - b.price
-        }
-        if (order === 'price-desc') {
-          return b.price - a.price
-        }
-        return 0
-      })
-        .filter(product => {
-          if (from && to) {
-            return product.price >= from && product.price <= to
-          }
-          if (from) {
-            return product.price >= from
-          }
-          if (to) {
-            return product.price <= to
-          }
-          return true
-        })
-        .slice((page - 1) * limit, page * limit)
+      productCount: filteredProducts.length,
+      products: filteredProducts.slice((page - 1) * limit, page * limit)
     }
     return productsByCategory;
   }));
 
   readonly pages$: Observable<number[]> = combineLatest([
     this.currentCategoryId$,
-    this.productsInCategory$,
+    this.productsByCategory$,
     this.currentLimit$,
-  ]).pipe(map(([id, products, limit]) => {
+  ]).pipe(map(([id, category, limit]) => {
     const result: number[] = [];
-    for (let i = 1; i <= Math.ceil(products.length / limit); i++) {
+    for (let i = 1; i <= Math.ceil(category.productCount / limit); i++) {
       result.push(i)
     }
     return result
   }));
 
-  public orders: Observable<{ id: string, name: string }[]> = of([
+  public orders$: Observable<{ id: string, name: string }[]> = of([
     { id: 'featured', name: "Featured" },
     { id: 'price-asc', name: "Price: Low to High" },
     { id: 'price-desc', name: 'Price: High to Low' },
     { id: 'rating', name: 'Avg. Rating' }
-  ])
+  ]);
+
 
   constructor(
     private _categoriesService: CategoriesService,
@@ -160,13 +158,13 @@ export class CategoryProductsComponent implements AfterViewInit {
   };
   onLimitChange(limit: number): void {
     combineLatest([
-      this.productsInCategory$,
+      this.productsByCategory$,
       this.currentPage$
     ]).pipe(take(1),
-      tap(([products, page]) => {
+      tap(([category, page]) => {
         return this._router.navigate([], {
           queryParams: {
-            page: (page > Math.ceil(products.length / limit)) ? Math.ceil(products.length / limit) : page,
+            page: (page > Math.ceil(category.productCount / limit)) ? Math.ceil(category.productCount / limit) : page,
             limit: limit
           }
         })
@@ -192,4 +190,27 @@ export class CategoryProductsComponent implements AfterViewInit {
   onToChange(value: string) {
     this._priceToSubject.next(+value)
   };
+
+  onRatingChange(item: number) {
+    this._ratingSubject.next(item)
+  }
+
+  filterByRating(productRate: number, selectedRating: number) {
+    if (selectedRating) {
+      return (productRate >= selectedRating)
+    } return true
+  };
+
+  filterByPrice(price: number, from: number, to: number) {
+    if (from && to) {
+      return price <= from && price <= to
+    }
+    if (from) {
+      return price >= from
+    }
+    if (to) {
+      return price <= to
+    }
+    return true
+  }
 }
