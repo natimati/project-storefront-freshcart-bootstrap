@@ -1,12 +1,14 @@
 import { AfterViewInit, ChangeDetectionStrategy, Component, ViewEncapsulation } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { BehaviorSubject, Observable, Subject, combineLatest, map, of, shareReplay, switchMap, take, tap, startWith } from 'rxjs';
+import { BehaviorSubject, Observable, Subject, combineLatest, map, of, shareReplay, startWith, switchMap, take, tap } from 'rxjs';
 import { CategoryModel } from '../../models/category.model';
+import { StoreModel } from '../../models/store.model';
 import { ProductsInCategoryQueryModel } from '../../query-models/products-in-category.query-model';
 import { ProductsByCategoryQueryModel } from '../../query-models/products-by-category.query-model';
 import { CategoriesService } from '../../services/categories.service';
 import { ProductsService } from '../../services/products.service';
+import { StoresService } from '../../services/stores.service';
 
 @Component({
   selector: 'app-category-products',
@@ -20,6 +22,10 @@ export class CategoryProductsComponent implements AfterViewInit {
     page: new FormControl()
   });
 
+  readonly storeForm = new FormGroup({
+    stores: new FormGroup({})
+  })
+
   private _priceFromSubject: Subject<number> = new Subject<number>();
   public priceFrom$: Observable<number> = this._priceFromSubject.asObservable().pipe(startWith(0));
 
@@ -31,6 +37,7 @@ export class CategoryProductsComponent implements AfterViewInit {
 
   private _orderSubject: BehaviorSubject<string> = new BehaviorSubject<string>('featured');
   public order$: Observable<string> = this._orderSubject.asObservable();
+
   readonly limitOptions$: Observable<number[]> = of([5, 10, 15]);
   // added 1 start to show products with rating >=1 and <2
   public ratingOptions$: Observable<number[]> = of([5, 4, 3, 2, 1]);
@@ -43,6 +50,17 @@ export class CategoryProductsComponent implements AfterViewInit {
   );
 
   readonly categories$: Observable<CategoryModel[]> = this._categoriesService.getAllCategories().pipe(shareReplay(1));
+  readonly stores$: Observable<StoreModel[]> = this._storeService.getAllStores().pipe(shareReplay(1), tap((stores) => {
+    this.resolveStoresFilter(stores);
+  }));
+
+  readonly selectedStores$: Observable<string[]> = combineLatest([
+    this.stores$,
+    this.storeForm.valueChanges.pipe(map((formValues) => formValues.stores))
+  ]).pipe(map(([stores, storeFilter]) => {
+    return stores.filter(store => storeFilter[store.id]).map(store => store.id);
+  }))
+
   readonly currentCategoryId$: Observable<string> = this._activatedRoute.params.pipe(
     map(params => params['categoryId'].toString()), shareReplay(1)
   );
@@ -61,9 +79,10 @@ export class CategoryProductsComponent implements AfterViewInit {
         ratingMark: this.starsCounter(product.ratingValue),
         price: product.price,
         imageUrl: product.imageUrl,
+        storeIds: product.storeIds
       }
     ))
-  }), shareReplay(1))
+  }), shareReplay(1));
 
   readonly productsByCategory$: Observable<ProductsByCategoryQueryModel> = combineLatest([
     this.currentCategoryId$.pipe(
@@ -75,8 +94,9 @@ export class CategoryProductsComponent implements AfterViewInit {
     this.currentPage$,
     this.priceFrom$,
     this.priceTo$,
-    this.rating$
-  ]).pipe(map(([currCategory, products, order, limit, page, from, to, rating]) => {
+    this.rating$,
+    this.selectedStores$
+  ]).pipe(map(([currCategory, products, order, limit, page, from, to, rating, selectedStores]) => {
     const filteredProducts = products.sort((a, b) => {
       if (order === 'featured') {
         return b.featureValue - a.featureValue
@@ -93,7 +113,9 @@ export class CategoryProductsComponent implements AfterViewInit {
       return 0
     })
       .filter(product => {
-        return this.filterByPrice(product.price, from, to) && this.filterByRating(product.ratingValue, rating)
+        return this.filterByPrice(product.price, from, to) &&
+          this.filterByRating(product.ratingValue, rating) &&
+          this.filterByStore(product.storeIds, selectedStores)
       });
     const productsByCategory = {
       categoryName: currCategory.name,
@@ -115,7 +137,6 @@ export class CategoryProductsComponent implements AfterViewInit {
     }
     return result
   }));
-
   public orders$: Observable<{ id: string, name: string }[]> = of([
     { id: 'featured', name: "Featured" },
     { id: 'price-asc', name: "Price: Low to High" },
@@ -128,7 +149,8 @@ export class CategoryProductsComponent implements AfterViewInit {
     private _categoriesService: CategoriesService,
     private _activatedRoute: ActivatedRoute,
     private _productService: ProductsService,
-    private _router: Router
+    private _router: Router,
+    private _storeService: StoresService
   ) {
   };
 
@@ -212,5 +234,25 @@ export class CategoryProductsComponent implements AfterViewInit {
       return price <= to
     }
     return true
+  };
+
+  filterByStore(storeIds: string[], storeFilter: string[]) {
+    if (storeFilter.length > 0) {
+      for (let i = 0; i <= storeIds.length; i++) {
+        if (storeFilter.includes(storeIds[i])) {
+          return true
+        }
+      }
+      return false
+    }
+    return true
+  };
+
+  resolveStoresFilter(stores: StoreModel[]) {
+    const storesGroup: FormGroup = this.storeForm.get('stores') as FormGroup;
+
+    for (let i = 0; i < stores.length; i++) {
+      storesGroup.addControl(stores[i].id, new FormControl(false))
+    }
   }
 }
