@@ -15,6 +15,15 @@
             </ul>
           </div>
         </div>
+
+        <div class="mb-8">
+          <h5 class="mb-3">Price</h5>
+          <div class="row gap-5">
+            <input #from type="text" placeholder="Price From" class="form-control" (input)="onFromChange(from.value)">
+            <input #to type="text" placeholder="Price To" class="form-control" (input)="onToChange(to.value)">
+          </div>
+        </div>
+
       </aside>
       <div class="col-lg-9">
         <div *ngIf="productsByCategory$ | async as item" class="d-flex flex-column gap-5">

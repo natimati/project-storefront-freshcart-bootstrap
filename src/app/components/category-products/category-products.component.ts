@@ -1,9 +1,9 @@
 import { AfterViewInit, ChangeDetectionStrategy, Component, ViewEncapsulation } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { BehaviorSubject, Observable, combineLatest, map, of, shareReplay, switchMap, tap, take } from 'rxjs';
-import { ProductsInCategoryQueryModel } from 'src/app/query-models/products-in-category.query-model';
+import { BehaviorSubject, Observable, Subject, combineLatest, map, of, shareReplay, switchMap, take, tap, startWith } from 'rxjs';
 import { CategoryModel } from '../../models/category.model';
+import { ProductsInCategoryQueryModel } from '../../query-models/products-in-category.query-model';
 import { ProductsByCategoryQueryModel } from '../../query-models/products-by-category.query-model';
 import { CategoriesService } from '../../services/categories.service';
 import { ProductsService } from '../../services/products.service';
@@ -19,6 +19,12 @@ export class CategoryProductsComponent implements AfterViewInit {
     limit: new FormControl(),
     page: new FormControl()
   });
+
+  private _priceFromSubject: Subject<number> = new Subject<number>();
+  public priceFrom$: Observable<number> = this._priceFromSubject.asObservable().pipe(startWith(0));
+
+  private _priceToSubject: Subject<number> = new Subject<number>();
+  public priceTo$: Observable<number> = this._priceToSubject.asObservable().pipe(startWith(0));
 
   private _orderSubject: BehaviorSubject<string> = new BehaviorSubject<string>('featured');
   public order$: Observable<string> = this._orderSubject.asObservable();
@@ -42,7 +48,7 @@ export class CategoryProductsComponent implements AfterViewInit {
   ]).pipe(map(([id, products]) => {
     const categoryProducts = products.filter(product => product.categoryId === id);
     return categoryProducts.map(product => (
-       {
+      {
         name: product.name,
         featureValue: product.featureValue,
         ratingCount: product.ratingCount,
@@ -62,7 +68,9 @@ export class CategoryProductsComponent implements AfterViewInit {
     this.order$,
     this.currentLimit$,
     this.currentPage$,
-  ]).pipe(map(([currCategory, products, order, limit, page]) => {
+    this.priceFrom$,
+    this.priceTo$
+  ]).pipe(map(([currCategory, products, order, limit, page, from, to]) => {
     const productsByCategory = {
       categoryName: currCategory.name,
       categoryId: currCategory.id,
@@ -81,7 +89,20 @@ export class CategoryProductsComponent implements AfterViewInit {
           return b.price - a.price
         }
         return 0
-      }).slice((page - 1) * limit, page * limit)
+      })
+        .filter(product => {
+          if (from && to) {
+            return product.price >= from && product.price <= to
+          }
+          if (from) {
+            return product.price >= from
+          }
+          if (to) {
+            return product.price <= to
+          }
+          return true
+        })
+        .slice((page - 1) * limit, page * limit)
     }
     return productsByCategory;
   }));
@@ -153,14 +174,22 @@ export class CategoryProductsComponent implements AfterViewInit {
 
   };
   onPageChange(page: number): void {
-      this.currentLimit$.pipe(take(1),
+    this.currentLimit$.pipe(take(1),
       tap(limit => {
-      return this._router.navigate([], {
-        queryParams: {
-          page: page,
-          limit
-        }
-      })
-    })).subscribe();
+        return this._router.navigate([], {
+          queryParams: {
+            page: page,
+            limit
+          }
+        })
+      })).subscribe();
+  };
+
+  onFromChange(value: string) {
+    this._priceFromSubject.next(+value)
+  };
+
+  onToChange(value: string) {
+    this._priceToSubject.next(+value)
   };
 }
