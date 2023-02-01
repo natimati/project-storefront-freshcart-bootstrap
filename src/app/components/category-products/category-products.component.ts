@@ -244,7 +244,7 @@ export class CategoryProductsComponent implements AfterViewInit {
 
   filterByPrice(price: number, from: number, to: number) {
     if (from && to) {
-      return price <= from && price <= to
+      return price >= from && price <= to
     }
     if (from) {
       return price >= from
